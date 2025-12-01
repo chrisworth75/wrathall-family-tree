@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrathall Family Tree</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Spectral:wght@300;400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Spectral', serif;
+            background: #f5f1e8;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to bottom, #f5f1e8 0%, #f5f1e8 70%, transparent 100%);
+            padding: 1.5rem 2rem 3rem;
+            z-index: 100;
+            text-align: center;
+        }
+        
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 400;
+            font-size: 2.5rem;
+            color: #2c2416;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+        
+        .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            color: #6b5d4d;
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+        
+        .controls button {
+            width: 44px;
+            height: 44px;
+            border: 1px solid #c4b8a5;
+            background: #f5f1e8;
+            color: #2c2416;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-family: 'Spectral', serif;
+        }
+        
+        .controls button:hover {
+            background: #e8e0d0;
+            border-color: #8b7d6b;
+        }
+        
+        .legend {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: rgba(245, 241, 232, 0.95);
+            padding: 1rem 1.5rem;
+            border: 1px solid #c4b8a5;
+            border-radius: 4px;
+            z-index: 100;
+            font-size: 0.85rem;
+            color: #4a4235;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0.4rem 0;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            border: 1px solid #8b7d6b;
+        }
+        
+        .tree-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            cursor: grab;
+        }
+        
+        .tree-container:active {
+            cursor: grabbing;
+        }
+        
+        svg {
+            display: block;
+        }
+        
+        .person-box {
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+        
+        .person-box:hover {
+            filter: brightness(0.95);
+        }
+        
+        .person-rect {
+            stroke: #8b7d6b;
+            stroke-width: 1.5;
+        }
+        
+        .person-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 13px;
+            fill: #2c2416;
+        }
+        
+        .person-dates {
+            font-family: 'Spectral', serif;
+            font-size: 10px;
+            fill: #6b5d4d;
+        }
+        
+        .person-notes {
+            font-family: 'Spectral', serif;
+            font-size: 9px;
+            fill: #8b7d6b;
+            font-style: italic;
+        }
+        
+        .connector {
+            stroke: #a89880;
+            stroke-width: 1.5;
+            fill: none;
+        }
+        
+        .marriage-line {
+            stroke: #c4b8a5;
+            stroke-width: 2;
+            stroke-dasharray: 4 2;
+        }
+        
+        .generation-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            fill: #a89880;
+            font-style: italic;
+        }
+        
+        /* Color coding by branch */
+        .branch-main { fill: #f8f4eb; }
+        .branch-leon { fill: #e8f0e8; }
+        .branch-constance { fill: #f0e8e8; }
+        .branch-blanche { fill: #e8e8f0; }
+        .branch-reginald { fill: #f0ece8; }
+        .branch-leslie { fill: #e8ecf0; }
+        .branch-medcalfe { fill: #f5ede5; }
+        .branch-external { fill: #ebebeb; }
+        
+        .deceased::after {
+            content: '†';
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>The Wrathall Family</h1>
+        <p class="subtitle">Compiled from the memoir of Leslie Gordon Wrathall, 1967</p>
+    </div>
+    
+    <div class="controls">
+        <button onclick="zoomIn()" title="Zoom In">+</button>
+        <button onclick="zoomOut()" title="Zoom Out">−</button>
+        <button onclick="resetView()" title="Reset View">⌂</button>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color branch-main"></div> H.L.W. & M.A.W.</div>
+        <div class="legend-item"><div class="legend-color branch-leon"></div> Leon's line</div>
+        <div class="legend-item"><div class="legend-color branch-constance"></div> Constance's line</div>
+        <div class="legend-item"><div class="legend-color branch-leslie"></div> Leslie's line</div>
+        <div class="legend-item"><div class="legend-color branch-external"></div> Spouses</div>
+    </div>
+    
+    <div class="tree-container" id="container">
+        <svg id="tree" width="3000" height="2400" viewBox="0 0 3000 2400">
+            <defs>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.1"/>
+                </filter>
+            </defs>
+            
+            <!-- Generation Labels -->
+            <text x="50" y="120" class="generation-label">Generation 1 — Grandparents</text>
+            <text x="50" y="320" class="generation-label">Generation 2 — Parents</text>
+            <text x="50" y="620" class="generation-label">Generation 3 — H.L.W. & M.A.W.'s Children</text>
+            <text x="50" y="1020" class="generation-label">Generation 4 — Grandchildren</text>
+            <text x="50" y="1620" class="generation-label">Generation 5 — Great-grandchildren</text>
+            
+            <!-- ==================== GENERATION 1: Grandparents ==================== -->
+            
+            <!-- Susan Wrathall's parents (small farmers near Westhouse) -->
+            <g class="person-box" transform="translate(200, 80)">
+                <rect class="person-rect branch-main" x="0" y="0" width="160" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="25" text-anchor="middle">Wrathall Family</text>
+                <text class="person-dates" x="80" y="42" text-anchor="middle">Small farmers</text>
+                <text class="person-notes" x="80" y="56" text-anchor="middle">Westhouse, nr Ingleton</text>
+            </g>
+            
+            <!-- Lonsdale of Lowther (H.L.W.'s father) -->
+            <g class="person-box" transform="translate(420, 80)">
+                <rect class="person-rect branch-external" x="0" y="0" width="180" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="90" y="25" text-anchor="middle">? Lonsdale</text>
+                <text class="person-dates" x="90" y="42" text-anchor="middle">of Lowther</text>
+                <text class="person-notes" x="90" y="56" text-anchor="middle">Brother/cousin of Yellow Earl</text>
+            </g>
+            
+            <!-- Medcalfe parents -->
+            <g class="person-box" transform="translate(900, 80)">
+                <rect class="person-rect branch-medcalfe" x="0" y="0" width="160" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="25" text-anchor="middle">Medcalfe Family</text>
+                <text class="person-dates" x="80" y="42" text-anchor="middle">Small farmers</text>
+                <text class="person-notes" x="80" y="56" text-anchor="middle">Westhouse district</text>
+            </g>
+            
+            <!-- Agnes & Thomas Shaw (raised M.A.W.) -->
+            <g class="person-box" transform="translate(1100, 80)">
+                <rect class="person-rect branch-medcalfe" x="0" y="0" width="180" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="90" y="25" text-anchor="middle">Thomas & Agnes Shaw</text>
+                <text class="person-dates" x="90" y="42" text-anchor="middle">"Grandma"</text>
+                <text class="person-notes" x="90" y="56" text-anchor="middle">Quakers, raised M.A.W.</text>
+            </g>
+            
+            <!-- Connectors Gen 1 to Gen 2 -->
+            <path class="connector" d="M280,150 L280,200 L350,200 L350,280"/>
+            <path class="connector" d="M510,150 L510,200 L350,200"/>
+            <path class="connector" d="M980,150 L980,200 L780,200 L780,280"/>
+            
+            <!-- ==================== GENERATION 2: Parents ==================== -->
+            
+            <!-- Susan Wrathall -->
+            <g class="person-box" transform="translate(270, 280)">
+                <rect class="person-rect branch-main" x="0" y="0" width="160" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="25" text-anchor="middle">Susan Wrathall</text>
+                <text class="person-dates" x="80" y="42" text-anchor="middle">"Mam"</text>
+                <text class="person-notes" x="80" y="56" text-anchor="middle">d. 1924/25</text>
+                <text class="person-notes" x="80" y="68" text-anchor="middle">m2. Lambert Brown</text>
+            </g>
+            
+            <!-- M.A.W.'s siblings - with label -->
+            <text x="980" y="260" class="generation-label">Siblings of Mary Alice (née Medcalfe)</text>
+            
+            <g class="person-box" transform="translate(700, 280)">
+                <rect class="person-rect branch-medcalfe" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="22" text-anchor="middle">Thomas Medcalfe</text>
+                <text class="person-dates" x="70" y="38" text-anchor="middle">Head gardener</text>
+                <text class="person-notes" x="70" y="52" text-anchor="middle">Arnside district</text>
+            </g>
+            
+            <g class="person-box" transform="translate(860, 280)">
+                <rect class="person-rect branch-medcalfe" x="0" y="0" width="130" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="65" y="22" text-anchor="middle">Eleanor Medcalfe</text>
+                <text class="person-dates" x="65" y="38" text-anchor="middle">"Aunt Eleanor"</text>
+                <text class="person-notes" x="65" y="52" text-anchor="middle">m. Illingworth</text>
+            </g>
+            
+            <g class="person-box" transform="translate(1010, 280)">
+                <rect class="person-rect branch-medcalfe" x="0" y="0" width="130" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="65" y="22" text-anchor="middle">Kathrine Medcalfe</text>
+                <text class="person-dates" x="65" y="38" text-anchor="middle">"Aunt Kate"</text>
+                <text class="person-notes" x="65" y="52" text-anchor="middle">d. c.1935</text>
+            </g>
+            
+            <!-- Brother lost at sea -->
+            <g class="person-box" transform="translate(1160, 280)">
+                <rect class="person-rect branch-medcalfe" x="0" y="0" width="130" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="65" y="22" text-anchor="middle">? Medcalfe</text>
+                <text class="person-dates" x="65" y="38" text-anchor="middle">Brother</text>
+                <text class="person-notes" x="65" y="52" text-anchor="middle">Lost at sea</text>
+            </g>
+            
+            <!-- Marriage line Susan to Lonsdale -->
+            <line class="marriage-line" x1="360" y1="115" x2="420" y2="115"/>
+            
+            <!-- Connector from Susan to H.L.W. -->
+            <path class="connector" d="M350,360 L350,480 L540,480 L540,580"/>
+            
+            <!-- Susan's brother (who moved to Gloucestershire) and his children - H.L.W.'s cousins -->
+            <text x="100" y="400" class="generation-label">H.L.W.'s Cousins (Gloucestershire)</text>
+            
+            <g class="person-box" transform="translate(100, 420)">
+                <rect class="person-rect branch-main" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="22" text-anchor="middle">Harry Wrathall</text>
+                <text class="person-dates" x="70" y="38" text-anchor="middle">Cousin of H.L.W.</text>
+                <text class="person-notes" x="70" y="52" text-anchor="middle">Cricketer, Gloucs/Eng</text>
+            </g>
+            
+            <g class="person-box" transform="translate(100, 500)">
+                <rect class="person-rect branch-main" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="22" text-anchor="middle">Fanny Wrathall</text>
+                <text class="person-dates" x="70" y="38" text-anchor="middle">"Aunt Fanny"</text>
+                <text class="person-notes" x="70" y="52" text-anchor="middle">m. Arthur Wheeler</text>
+            </g>
+            
+            <!-- Connector from M.A.W. to her siblings -->
+            <path class="connector" d="M800,625 L920,625 L920,350"/>
+            <line class="connector" x1="770" y1="350" x2="1225" y2="350"/>
+            
+            <!-- Marriage line between H.L.W. and M.A.W. -->
+            <line class="marriage-line" x1="620" y1="625" x2="640" y2="625"/>
+            
+            <!-- ==================== GENERATION 3: H.L.W. & M.A.W.'s Children ==================== -->
+            
+            <!-- H.L.W. -->
+            <g class="person-box" transform="translate(460, 580)">
+                <rect class="person-rect branch-main" x="0" y="0" width="160" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Henry Lonsdale</text>
+                <text class="person-name" x="80" y="38" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="80" y="54" text-anchor="middle">b. 15 Mar 1863 Blackburn</text>
+                <text class="person-dates" x="80" y="66" text-anchor="middle">d. 19 Nov 1927 London</text>
+                <text class="person-notes" x="80" y="80" text-anchor="middle">Founded Wrathall & Co.</text>
+            </g>
+            
+            <!-- M.A.W. -->
+            <g class="person-box" transform="translate(640, 580)">
+                <rect class="person-rect branch-main" x="0" y="0" width="160" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Mary Alice</text>
+                <text class="person-name" x="80" y="38" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="80" y="54" text-anchor="middle">née Medcalfe</text>
+                <text class="person-dates" x="80" y="66" text-anchor="middle">1860 - 1948</text>
+                <text class="person-notes" x="80" y="80" text-anchor="middle">m. 30 Sep 1885 Thornton</text>
+            </g>
+            
+            <!-- Marriage line -->
+            <line class="marriage-line" x1="620" y1="625" x2="640" y2="625"/>
+            
+            <!-- Children connector from H.L.W. & M.A.W. -->
+            <path class="connector" d="M620,670 L620,720 L620,750"/>
+            
+            <!-- Horizontal line connecting all children -->
+            <line class="connector" x1="180" y1="750" x2="1380" y2="750"/>
+            
+            <!-- L.E.W. - Leon -->
+            <g class="person-box" transform="translate(100, 780)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="160" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Leon Earl Wrathall</text>
+                <text class="person-dates" x="80" y="38" text-anchor="middle">b. 20 Jul 1886</text>
+                <text class="person-dates" x="80" y="52" text-anchor="middle">d. 31 Mar 1955</text>
+                <text class="person-notes" x="80" y="66" text-anchor="middle">Lt. R.N.V.R.</text>
+                <text class="person-notes" x="80" y="78" text-anchor="middle">Partner, Wrathall & Co.</text>
+            </g>
+            <path class="connector" d="M180,750 L180,780"/>
+            
+            <!-- Evelyn Downham (Leon's wife) -->
+            <g class="person-box" transform="translate(280, 780)">
+                <rect class="person-rect branch-external" x="0" y="0" width="150" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="75" y="22" text-anchor="middle">Evelyn Linstead</text>
+                <text class="person-name" x="75" y="36" text-anchor="middle">Downham</text>
+                <text class="person-dates" x="75" y="52" text-anchor="middle">d. 6 Jan 1965</text>
+                <text class="person-notes" x="75" y="66" text-anchor="middle">m. 1912</text>
+            </g>
+            <line class="marriage-line" x1="260" y1="820" x2="280" y2="820"/>
+            
+            <!-- C.M.L.W. - Constance -->
+            <g class="person-box" transform="translate(460, 780)">
+                <rect class="person-rect branch-constance" x="0" y="0" width="170" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="85" y="22" text-anchor="middle">Constance Mary</text>
+                <text class="person-name" x="85" y="36" text-anchor="middle">Lonsdale Wrathall</text>
+                <text class="person-dates" x="85" y="52" text-anchor="middle">b. 6 Sep 1887</text>
+                <text class="person-dates" x="85" y="64" text-anchor="middle">d. Aug 1962</text>
+                <text class="person-notes" x="85" y="78" text-anchor="middle">"Lons"</text>
+            </g>
+            <path class="connector" d="M545,750 L545,780"/>
+            
+            <!-- James Coull (1st husband) -->
+            <g class="person-box" transform="translate(650, 780)">
+                <rect class="person-rect branch-external" x="0" y="0" width="130" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="65" y="20" text-anchor="middle">James C. Coull</text>
+                <text class="person-dates" x="65" y="36" text-anchor="middle">d. 13 Feb 1919</text>
+                <text class="person-notes" x="65" y="50" text-anchor="middle">m. 17 Sep 1918</text>
+                <text class="person-notes" x="65" y="62" text-anchor="middle">Influenza</text>
+            </g>
+            <line class="marriage-line" x1="630" y1="815" x2="650" y2="815"/>
+            
+            <!-- Arthur Worthington (2nd husband) -->
+            <g class="person-box" transform="translate(650, 860)">
+                <rect class="person-rect branch-external" x="0" y="0" width="130" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="65" y="20" text-anchor="middle">Arthur Worthington</text>
+                <text class="person-dates" x="65" y="36" text-anchor="middle">d. 1957</text>
+                <text class="person-notes" x="65" y="50" text-anchor="middle">m. summer 1921</text>
+                <text class="person-notes" x="65" y="62" text-anchor="middle">Bolton, chemical mfr.</text>
+            </g>
+            <line class="marriage-line" x1="630" y1="870" x2="650" y2="870"/>
+            
+            <!-- B.E.W. - Blanche -->
+            <g class="person-box" transform="translate(810, 780)">
+                <rect class="person-rect branch-blanche" x="0" y="0" width="160" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Blanche Evelyn</text>
+                <text class="person-name" x="80" y="36" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="80" y="52" text-anchor="middle">b. 17 Sep 1889</text>
+                <text class="person-dates" x="80" y="64" text-anchor="middle">d. 29 Mar 1926</text>
+                <text class="person-notes" x="80" y="78" text-anchor="middle">T.B., bur. Roby</text>
+            </g>
+            <path class="connector" d="M890,750 L890,780"/>
+            
+            <!-- Norman Cook -->
+            <g class="person-box" transform="translate(990, 780)">
+                <rect class="person-rect branch-external" x="0" y="0" width="130" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="65" y="20" text-anchor="middle">Robert Norman</text>
+                <text class="person-name" x="65" y="34" text-anchor="middle">Cook</text>
+                <text class="person-dates" x="65" y="50" text-anchor="middle">d. 1964/65</text>
+                <text class="person-notes" x="65" y="62" text-anchor="middle">m. 1920, no children</text>
+            </g>
+            <line class="marriage-line" x1="970" y1="820" x2="990" y2="820"/>
+            
+            <!-- R.J.W. - Reginald -->
+            <g class="person-box" transform="translate(1150, 780)">
+                <rect class="person-rect branch-reginald" x="0" y="0" width="160" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Reginald John</text>
+                <text class="person-name" x="80" y="36" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="80" y="52" text-anchor="middle">b. 12 Jan 1891</text>
+                <text class="person-dates" x="80" y="64" text-anchor="middle">d. 30 Oct 1918</text>
+                <text class="person-notes" x="80" y="78" text-anchor="middle">Influenza, bur. Roby</text>
+            </g>
+            <path class="connector" d="M1230,750 L1230,780"/>
+            
+            <!-- Christine Beecham -->
+            <g class="person-box" transform="translate(1330, 780)">
+                <rect class="person-rect branch-external" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Christine Beecham</text>
+                <text class="person-dates" x="70" y="36" text-anchor="middle">d/o Sir Joseph Beecham</text>
+                <text class="person-notes" x="70" y="50" text-anchor="middle">m. 27 Mar 1917</text>
+                <text class="person-notes" x="70" y="62" text-anchor="middle">No children</text>
+            </g>
+            <line class="marriage-line" x1="1310" y1="820" x2="1330" y2="820"/>
+            
+            <!-- Deceased infants note -->
+            <g class="person-box" transform="translate(1500, 780)">
+                <rect class="person-rect branch-main" x="0" y="0" width="160" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Sidney (×2), Landon</text>
+                <text class="person-dates" x="80" y="38" text-anchor="middle">c.1893, 1895, 1897</text>
+                <text class="person-notes" x="80" y="54" text-anchor="middle">Died in infancy</text>
+            </g>
+            <path class="connector" d="M1380,750 L1580,750 L1580,780"/>
+            
+            <!-- L.G.W. - Leslie (author) -->
+            <g class="person-box" transform="translate(1690, 780)">
+                <rect class="person-rect branch-leslie" x="0" y="0" width="170" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="85" y="22" text-anchor="middle">Leslie Gordon</text>
+                <text class="person-name" x="85" y="36" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="85" y="52" text-anchor="middle">b. 24 Jun 1904</text>
+                <text class="person-notes" x="85" y="66" text-anchor="middle">RAF Intelligence Officer</text>
+                <text class="person-notes" x="85" y="78" text-anchor="middle">Author of this memoir</text>
+            </g>
+            <path class="connector" d="M1580,750 L1775,750 L1775,780"/>
+            
+            <!-- Olive Nicholson -->
+            <g class="person-box" transform="translate(1880, 780)">
+                <rect class="person-rect branch-external" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Olive Nicholson</text>
+                <text class="person-dates" x="70" y="36" text-anchor="middle">W.R.N.S. Signals</text>
+                <text class="person-notes" x="70" y="50" text-anchor="middle">m. 19 Sep 1945</text>
+            </g>
+            <line class="marriage-line" x1="1860" y1="820" x2="1880" y2="820"/>
+            
+            <!-- ==================== GENERATION 4: Grandchildren ==================== -->
+            
+            <!-- Leon's children connector -->
+            <path class="connector" d="M215,870 L215,920 L215,980"/>
+            <line class="connector" x1="100" y1="980" x2="550" y2="980"/>
+            
+            <!-- Evelyn Constance Irene -->
+            <g class="person-box" transform="translate(30, 1000)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Evelyn Constance</text>
+                <text class="person-name" x="70" y="34" text-anchor="middle">Irene Wrathall</text>
+                <text class="person-dates" x="70" y="50" text-anchor="middle">b. 6 Jun 1913</text>
+                <text class="person-notes" x="70" y="64" text-anchor="middle">m. Sidney Richards</text>
+            </g>
+            <path class="connector" d="M100,980 L100,1000"/>
+            
+            <!-- Donald Earl -->
+            <g class="person-box" transform="translate(180, 1000)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Donald Earl</text>
+                <text class="person-name" x="70" y="34" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="70" y="50" text-anchor="middle">b. 13 Dec 1914</text>
+                <text class="person-dates" x="70" y="62" text-anchor="middle">d. 1954 (motor acc.)</text>
+            </g>
+            <path class="connector" d="M250,980 L250,1000"/>
+            
+            <!-- Henry Linstead "Lyn" -->
+            <g class="person-box" transform="translate(330, 1000)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Henry Linstead</text>
+                <text class="person-name" x="70" y="34" text-anchor="middle">Wrathall "Lyn"</text>
+                <text class="person-dates" x="70" y="50" text-anchor="middle">b. 6 Sep 1917</text>
+                <text class="person-notes" x="70" y="64" text-anchor="middle">Major, R.A.S.C.</text>
+            </g>
+            <path class="connector" d="M400,980 L400,1000"/>
+            
+            <!-- Kenneth David Lonsdale -->
+            <g class="person-box" transform="translate(480, 1000)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Kenneth David</text>
+                <text class="person-name" x="70" y="34" text-anchor="middle">Lonsdale Wrathall</text>
+                <text class="person-dates" x="70" y="50" text-anchor="middle">b. 8 Jul 1921</text>
+                <text class="person-notes" x="70" y="64" text-anchor="middle">Leyland Motors</text>
+            </g>
+            <path class="connector" d="M550,980 L550,1000"/>
+            
+            <!-- Leon Shirley -->
+            <g class="person-box" transform="translate(630, 1000)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Leon Shirley</text>
+                <text class="person-name" x="70" y="34" text-anchor="middle">Wrathall</text>
+                <text class="person-dates" x="70" y="50" text-anchor="middle">b. 14 Jan 1923</text>
+                <text class="person-notes" x="70" y="64" text-anchor="middle">Lt. R.N.V.R.</text>
+            </g>
+            <path class="connector" d="M550,980 L700,980 L700,1000"/>
+            
+            <!-- Spouses of Leon's children -->
+            <!-- Jane Muriel Phillips (Donald's wife) -->
+            <g class="person-box" transform="translate(180, 1090)">
+                <rect class="person-rect branch-external" x="0" y="0" width="120" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="60" y="18" text-anchor="middle">Jane Muriel Phillips</text>
+                <text class="person-notes" x="60" y="34" text-anchor="middle">m. 1935</text>
+            </g>
+            
+            <!-- Kathleen O'Reilly (Lyn's 1st wife) -->
+            <g class="person-box" transform="translate(330, 1090)">
+                <rect class="person-rect branch-external" x="0" y="0" width="120" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="60" y="18" text-anchor="middle">Kathleen O'Reilly</text>
+                <text class="person-notes" x="60" y="34" text-anchor="middle">m. 1941, d. 1949</text>
+            </g>
+            
+            <!-- Beryl McMorine (Lyn's 2nd wife) -->
+            <g class="person-box" transform="translate(330, 1150)">
+                <rect class="person-rect branch-external" x="0" y="0" width="120" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="60" y="18" text-anchor="middle">Beryl McMorine</text>
+                <text class="person-notes" x="60" y="34" text-anchor="middle">m. 1952</text>
+            </g>
+            
+            <!-- Agnes Bamber (Kenneth's wife) -->
+            <g class="person-box" transform="translate(480, 1090)">
+                <rect class="person-rect branch-external" x="0" y="0" width="120" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="60" y="18" text-anchor="middle">Agnes Bamber</text>
+                <text class="person-notes" x="60" y="34" text-anchor="middle">m. 1952, Preston</text>
+            </g>
+            
+            <!-- Eileen Newton (Leon S's 1st wife) -->
+            <g class="person-box" transform="translate(630, 1090)">
+                <rect class="person-rect branch-external" x="0" y="0" width="120" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="60" y="18" text-anchor="middle">Eileen Newton</text>
+                <text class="person-notes" x="60" y="34" text-anchor="middle">m. 1951, divorced</text>
+            </g>
+            
+            <!-- Nina (Leon S's 2nd wife) -->
+            <g class="person-box" transform="translate(630, 1150)">
+                <rect class="person-rect branch-external" x="0" y="0" width="120" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="60" y="18" text-anchor="middle">Nina</text>
+                <text class="person-notes" x="60" y="34" text-anchor="middle">2nd wife</text>
+            </g>
+            
+            <!-- Constance's children (Worthington) -->
+            <path class="connector" d="M545,870 L545,920 L880,920 L880,1250"/>
+            <line class="connector" x1="820" y1="1250" x2="1000" y2="1250"/>
+            
+            <g class="person-box" transform="translate(790, 1270)">
+                <rect class="person-rect branch-constance" x="0" y="0" width="160" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Arthur Gordon</text>
+                <text class="person-name" x="80" y="36" text-anchor="middle">Lonsdale Worthington</text>
+                <text class="person-dates" x="80" y="52" text-anchor="middle">b. 1922</text>
+                <text class="person-notes" x="80" y="64" text-anchor="middle">m. Margery Goodall</text>
+            </g>
+            <path class="connector" d="M870,1250 L870,1270"/>
+            
+            <g class="person-box" transform="translate(970, 1270)">
+                <rect class="person-rect branch-constance" x="0" y="0" width="160" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">James Bryan</text>
+                <text class="person-name" x="80" y="36" text-anchor="middle">Lonsdale Worthington</text>
+                <text class="person-dates" x="80" y="52" text-anchor="middle">b. 1924</text>
+                <text class="person-notes" x="80" y="64" text-anchor="middle">m. Joan Eaden</text>
+            </g>
+            <path class="connector" d="M1000,1250 L1050,1250 L1050,1270"/>
+            
+            <!-- Leslie's child -->
+            <path class="connector" d="M1950,850 L1950,920 L1400,920 L1400,1250"/>
+            
+            <g class="person-box" transform="translate(1320, 1270)">
+                <rect class="person-rect branch-leslie" x="0" y="0" width="160" height="80" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Peter Hamish Ford</text>
+                <text class="person-name" x="80" y="36" text-anchor="middle">Lonsdale-Wrathall</text>
+                <text class="person-dates" x="80" y="52" text-anchor="middle">b. 25 Jun 1947</text>
+                <text class="person-notes" x="80" y="66" text-anchor="middle">Articled clerk, then</text>
+                <text class="person-notes" x="80" y="78" text-anchor="middle">Rubery Owen & Co.</text>
+            </g>
+            <path class="connector" d="M1400,1250 L1400,1270"/>
+            
+            <!-- ==================== GENERATION 5: Great-grandchildren ==================== -->
+            
+            <!-- Evelyn's children (Richards) -->
+            <path class="connector" d="M100,1080 L100,1580"/>
+            <g class="person-box" transform="translate(30, 1600)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="20" text-anchor="middle">Richards children</text>
+                <text class="person-notes" x="70" y="36" text-anchor="middle">1 son, 2 daughters</text>
+            </g>
+            
+            <!-- Donald's children -->
+            <path class="connector" d="M250,1140 L250,1580"/>
+            <g class="person-box" transform="translate(180, 1600)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="18" text-anchor="middle">Wrathall children</text>
+                <text class="person-dates" x="70" y="34" text-anchor="middle">Anthony, Martyn,</text>
+                <text class="person-dates" x="70" y="48" text-anchor="middle">Carolin, Penelope,</text>
+                <text class="person-dates" x="70" y="62" text-anchor="middle">Philippa</text>
+            </g>
+            
+            <!-- Lyn's children -->
+            <path class="connector" d="M390,1200 L390,1580"/>
+            <g class="person-box" transform="translate(330, 1600)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="18" text-anchor="middle">Wrathall children</text>
+                <text class="person-dates" x="70" y="34" text-anchor="middle">Virginia (1st m.)</text>
+                <text class="person-dates" x="70" y="48" text-anchor="middle">Elizabeth Ann, Vivian</text>
+                <text class="person-dates" x="70" y="62" text-anchor="middle">Louise, David Charles</text>
+            </g>
+            
+            <!-- Kenneth's children -->
+            <path class="connector" d="M540,1140 L540,1580"/>
+            <g class="person-box" transform="translate(480, 1600)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="60" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="18" text-anchor="middle">Wrathall children</text>
+                <text class="person-dates" x="70" y="34" text-anchor="middle">Angela, Janet,</text>
+                <text class="person-dates" x="70" y="48" text-anchor="middle">Stephen, Margaret</text>
+            </g>
+            
+            <!-- Leon Shirley's children -->
+            <path class="connector" d="M690,1200 L690,1580"/>
+            <g class="person-box" transform="translate(630, 1600)">
+                <rect class="person-rect branch-leon" x="0" y="0" width="140" height="60" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="18" text-anchor="middle">Wrathall children</text>
+                <text class="person-dates" x="70" y="34" text-anchor="middle">Verity, Andrew, Timothy</text>
+                <text class="person-dates" x="70" y="48" text-anchor="middle">Oliver (2nd m.)</text>
+            </g>
+            
+            <!-- Uncle Ben section (related family) -->
+            <text x="2050" y="120" class="generation-label">Related Families</text>
+            
+            <g class="person-box" transform="translate(2050, 150)">
+                <rect class="person-rect branch-external" x="0" y="0" width="180" height="90" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="90" y="22" text-anchor="middle">Benjamin Wildman</text>
+                <text class="person-name" x="90" y="36" text-anchor="middle">Browne</text>
+                <text class="person-dates" x="90" y="52" text-anchor="middle">"Uncle Ben"</text>
+                <text class="person-dates" x="90" y="64" text-anchor="middle">d. c.1930</text>
+                <text class="person-notes" x="90" y="78" text-anchor="middle">Great Eastern Oil Co.</text>
+            </g>
+            
+            <g class="person-box" transform="translate(2250, 150)">
+                <rect class="person-rect branch-external" x="0" y="0" width="140" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="70" y="22" text-anchor="middle">Maud Goodrich</text>
+                <text class="person-dates" x="70" y="38" text-anchor="middle">"Aunty Maud"</text>
+                <text class="person-dates" x="70" y="52" text-anchor="middle">d. c.1950</text>
+            </g>
+            <line class="marriage-line" x1="2230" y1="190" x2="2250" y2="190"/>
+            
+            <path class="connector" d="M2140,240 L2140,280"/>
+            <line class="connector" x1="2100" y1="280" x2="2220" y2="280"/>
+            
+            <g class="person-box" transform="translate(2050, 300)">
+                <rect class="person-rect branch-external" x="0" y="0" width="100" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="50" y="22" text-anchor="middle">Stewart</text>
+                <text class="person-dates" x="50" y="38" text-anchor="middle">Browne</text>
+            </g>
+            
+            <g class="person-box" transform="translate(2170, 300)">
+                <rect class="person-rect branch-external" x="0" y="0" width="100" height="50" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="50" y="22" text-anchor="middle">Ralph</text>
+                <text class="person-dates" x="50" y="38" text-anchor="middle">Browne</text>
+            </g>
+            
+            <!-- Wheeler family (Aunt Fanny) -->
+            <g class="person-box" transform="translate(2050, 400)">
+                <rect class="person-rect branch-main" x="0" y="0" width="160" height="70" rx="3" filter="url(#shadow)"/>
+                <text class="person-name" x="80" y="22" text-anchor="middle">Wheeler children</text>
+                <text class="person-dates" x="80" y="38" text-anchor="middle">(Aunt Fanny's)</text>
+                <text class="person-notes" x="80" y="54" text-anchor="middle">Arthur, Cyril, Nora</text>
+            </g>
+            
+        </svg>
+    </div>
+    
+    <script>
+        const container = document.getElementById('container');
+        const svg = document.getElementById('tree');
+        
+        let scale = 0.6;
+        let translateX = 0;
+        let translateY = -100;
+        let isDragging = false;
+        let startX, startY;
+        
+        function updateTransform() {
+            svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            svg.style.transformOrigin = '0 0';
+        }
+        
+        function zoomIn() {
+            scale = Math.min(scale * 1.2, 2);
+            updateTransform();
+        }
+        
+        function zoomOut() {
+            scale = Math.max(scale / 1.2, 0.2);
+            updateTransform();
+        }
+        
+        function resetView() {
+            scale = 0.6;
+            translateX = 0;
+            translateY = -100;
+            updateTransform();
+        }
+        
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+        });
+        
+        container.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            updateTransform();
+        });
+        
+        container.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        container.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+        
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        });
+        
+        // Initial transform
+        updateTransform();
+    </script>
+</body>
+</html>
